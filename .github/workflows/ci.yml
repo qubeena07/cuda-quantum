@@ -115,10 +115,7 @@ jobs:
           echo "pybind11_commit=$(git rev-parse @:./tpls/pybind11)" >> $GITHUB_OUTPUT
           echo "nanobind_commit=$(git rev-parse @:./tpls/nanobind)" >> $GITHUB_OUTPUT
 
-      # Reproduces realtime_ci.yml's old path-filter (`realtime/**`, `.github/**`)
-      # via the GitHub PR diff API so we don't need a deep clone. On
-      # merge_group/schedule/workflow_dispatch we always run the realtime
-      # wrapper (no PR base to diff against; full coverage is expected).
+      # Path-filter for the realtime wrapper: realtime/** or .github/**.
       - id: realtime
         env:
           GH_TOKEN: ${{ github.token }}
@@ -368,14 +365,6 @@ jobs:
       cuda_version: ${{ matrix.cuda_version }}
       build_cache: ${{ fromJson(needs.config_source_build.outputs.json).build_cache[format('{0}-cu{1}-installer', matrix.platform, matrix.cuda_version)] }}
 
-  # ============================================================================
-  # Wrapped sub-workflows: these used to run as separate top-level workflows
-  # (`Basic content checks`, `CI - macOS`, `CodeQL Advanced`, `Realtime CI`).
-  # They're invoked here as reusable workflows so the CI Summary captures
-  # everything in one PR comment and a single required check (`CI / CI Summary`)
-  # can gate the merge queue.
-  # ============================================================================
-
   basic_checks:
     name: Basic checks
     needs: metadata
@@ -393,11 +382,8 @@ jobs:
   codeql:
     name: CodeQL
     needs: metadata
-    # CodeQL already scans on the PR side; skip the redundant merge_group run.
     if: github.event_name != 'merge_group'
-    # Reusable workflows cannot escalate permissions above the caller. Declare
-    # explicitly so a future top-level lockdown of ci.yml doesn't silently
-    # break the SARIF upload.
+    # Required for SARIF upload; reusable workflows can't escalate.
     permissions:
       security-events: write
       packages: read
@@ -409,18 +395,11 @@ jobs:
   realtime:
     name: Realtime
     needs: metadata
-    # Path-filter: on copy-pr-bot PR pushes, skip unless realtime/** or
-    # .github/** changed. On merge_group / schedule / workflow_dispatch the
-    # metadata job set realtime_changed=true unconditionally.
     if: needs.metadata.outputs.realtime_changed == 'true'
     uses: ./.github/workflows/realtime_ci.yml
     secrets: inherit
 
-  # Single aggregator that summarizes the entire CI workflow.
-  # Branch protection / merge queue should require ONLY this context;
-  # adding/removing matrix legs above does not require a ruleset edit.
-  # Passes on `success` and `skipped` (jobs intentionally skipped on PR builds).
-  # Fails on `failure` or `cancelled` from any listed job.
+  # Single required check; matrix legs roll up here.
   ci_summary:
     name: CI Summary
     runs-on: ubuntu-latest

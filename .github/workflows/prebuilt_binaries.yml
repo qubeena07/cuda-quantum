@@ -509,9 +509,7 @@ jobs:
               fi
             done
             
-            # Execute simple remote simulator tests with the installer 
-            # because this target was skipped in validate_installation.sh due to 
-            # incomplete MPI installation (need install_sshclient.sh).
+            # remote-mqpu was skipped by validate_installation.sh (no ssh-client).
             for ex in `find examples/other/remote_sim/ -name '*.cpp'`; do
               nvq++ --target remote-mqpu $ex
               status=$?

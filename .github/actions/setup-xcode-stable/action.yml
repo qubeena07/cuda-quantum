@@ -23,9 +23,7 @@ runs:
       run: |
         set -euo pipefail
 
-        # Mirrors the selection strategy from maxim-lobanov/setup-xcode
-        # (scan installed Xcode apps, ignore beta releases, choose newest
-        # stable), but keeps it local to avoid external-action allowlist issues.
+        # Local equivalent of maxim-lobanov/setup-xcode (allowlist-free).
         selection_file=$(mktemp)
         python3 > "$selection_file" <<'PY'
         from pathlib import Path

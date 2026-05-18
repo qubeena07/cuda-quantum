@@ -4,9 +4,6 @@
 name: "CodeQL Advanced"
 
 on:
-  # PR-side scanning is now invoked from ci.yml as a reusable workflow so the
-  # CI Summary covers CodeQL alongside the other checks. Push-to-main and the
-  # weekly cron remain as standalone SAST baseline scans.
   workflow_call:
   push:
     branches:

@@ -47,12 +47,7 @@ merge_group: &full_matrix
 - Create Python wheels (arm64, 3.11, 12.6) / Validate wheel (fedora:42)
 - Create Python wheels (arm64, 3.11, 12.6) / Validate wheel (redhat/ubi8:8.10, --user)
 - Create Python wheels (arm64, 3.11, 12.6) / Validate wheel (redhat/ubi8:8.10)
-# Wrapped sub-workflows folded under the CI orchestrator. Each top-level
-# wrapper job name (left side of the slash) is set in ci.yml; the right side
-# is the inner reusable workflow's job name (or matrix-expanded job name).
-# CodeQL is intentionally absent from this list — the `codeql` wrapper has
-# `if: github.event_name != 'merge_group'` and so reports `skipped` here.
-# Realtime is intentionally absent until names confirmed in a real run.
+# Wrapped sub-workflows (CodeQL skipped on merge_group; realtime TBD).
 - Basic checks / Check code formatting
 - Basic checks / Check license headers
 - Basic checks / Check spelling
