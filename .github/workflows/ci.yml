@@ -119,22 +119,33 @@ jobs:
       - id: realtime
         env:
           GH_TOKEN: ${{ github.token }}
+          EVENT: ${{ github.event_name }}
+          PR_NUMBER: ${{ steps.pr_info.outputs.pr_number }}
+          REPO: ${{ github.repository }}
         run: |
-          realtime_changed=false
-          case "${{ github.event_name }}" in
-            merge_group|schedule|workflow_dispatch)
-              realtime_changed=true
+          # Always run on merge_group / schedule / workflow_dispatch.
+          # On PR push, run only if realtime/** or .github/** changed.
+          run_realtime=false
+          case "$EVENT" in
+            merge_group | schedule | workflow_dispatch)
+              run_realtime=true
               ;;
             push)
-              pr_number="${{ steps.pr_info.outputs.pr_number }}"
-              if [ -n "$pr_number" ] && \
-                 gh pr diff "$pr_number" -R "${{ github.repository }}" --name-only \
-                   | grep -qE '^(realtime/|\.github/)'; then
-                realtime_changed=true
+              if [ -n "$PR_NUMBER" ]; then
+                changed_files=$(gh pr diff "$PR_NUMBER" -R "$REPO" --name-only)
+                while IFS= read -r file; do
+                  case "$file" in
+                    realtime/* | .github/*)
+                      run_realtime=true
+                      break
+                      ;;
+                  esac
+                done <<< "$changed_files"
               fi
               ;;
           esac
-          echo "realtime_changed=$realtime_changed" >> $GITHUB_OUTPUT
+
+          echo "realtime_changed=$run_realtime" >> $GITHUB_OUTPUT
 
   devdeps:
     name: Load dependencies
